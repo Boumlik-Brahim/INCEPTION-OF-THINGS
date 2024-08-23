@@ -1,6 +1,9 @@
-sudo apt-get update
-sudo apt-get install -y curl
+sudo -i
+apt-get update
+apt-get install -y curl
 
 SERVER_IP=192.168.56.110
+K3S_TOKEN=$(cat /vagrant_shared/token)
 
-curl -sfL https://get.k3s.io | K3S_URL=https://$SERVER_IP:6443 K3S_TOKEN=$(cat /var/lib/rancher/k3s/server/node-token) sh -
+
+curl -sfL https://get.k3s.io | K3S_URL=https://$SERVER_IP:6443 K3S_TOKEN=$K3S_TOKEN  sh -
