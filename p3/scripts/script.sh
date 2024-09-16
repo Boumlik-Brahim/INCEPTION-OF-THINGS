@@ -4,16 +4,19 @@
 curl -fsSL https://get.docker.com -o get-docker.sh
 sh get-docker.sh
 
-# install k3d
-curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
-
 # install kubectl
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 chmod +x kubectl
 sudo mv kubectl /usr/local/bin/
 
+# install k3d
+curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+
 # create k3d cluster
 k3d cluster create my-cluster --agents 1
+
+# get cluster info
+kubectl my-cluster
 
 # Create Argo CD Namespace
 kubectl create namespace argocd
@@ -23,6 +26,12 @@ kubectl create namespace dev
 
 # Install Argo CD
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+
+# expose agrocd
+echo "waiting for argocd pods to start.."
+kubectl wait --for=condition=Ready pods --all --timeout=69420s -n argocd
+kubectl port-forward svc/argocd-server -n argocd 8080:443 --address="0.0.0.0" 2>&1 > /var/log/argocd-log &
 
 # Expose the Argo CD API Server
 kubectl port-forward svc/argocd-server -n argocd 8080:443
