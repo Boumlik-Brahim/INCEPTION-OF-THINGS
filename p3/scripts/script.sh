@@ -32,6 +32,9 @@ curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/download/v2.6.7
 chmod +x argocd
 sudo mv argocd /usr/local/bin/
 
-# Login using CLI
-argocd login localhost:8080
+# Login to argocd using CLI
+kubectl port-forward svc/argocd-server -n argocd 9393:443 &>/dev/null &
+ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo)
+argocd login localhost:9393 --username admin --password $ARGOCD_PASSWORD --insecure --grpc-web
+
 
