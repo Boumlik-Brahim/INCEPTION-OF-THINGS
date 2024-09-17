@@ -15,9 +15,6 @@ curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
 # create k3d cluster
 k3d cluster create my-cluster --agents 1
 
-# get cluster info
-kubectl my-cluster
-
 # Create Argo CD Namespace
 kubectl create namespace argocd
 
@@ -33,17 +30,37 @@ echo "waiting for argocd pods to start.."
 kubectl wait --for=condition=Ready pods --all --timeout=69420s -n argocd
 kubectl port-forward svc/argocd-server -n argocd 8080:443 --address="0.0.0.0" 2>&1 > /var/log/argocd-log &
 
-# Expose the Argo CD API Server
-kubectl port-forward svc/argocd-server -n argocd 8080:443
-
 # Install the Argo CD CLI
 curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/download/v2.6.7/argocd-linux-amd64
 chmod +x argocd
 sudo mv argocd /usr/local/bin/
 
 # Login to argocd using CLI
-kubectl port-forward svc/argocd-server -n argocd 9393:443 &>/dev/null &
 ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo)
-argocd login localhost:9393 --username admin --password $ARGOCD_PASSWORD --insecure --grpc-web
+echo ${ARGOCD_PASSWORD}
+argocd login localhost:8080 --username admin --password $ARGOCD_PASSWORD --insecure --grpc-web
 
+# change context namespace
+kubectl config set-context --current --namespace=argocd
 
+# create app in agrocd
+argocd app create my-app --repo https://github.com/Boumlik-Brahim/ybensell --path dev --dest-server https://kubernetes.default.svc --dest-namespace dev
+sleep 10
+
+#view the app
+argocd app get my-app
+
+# toggle app autosync
+argocd app set my-app --sync-policy automated
+sleep 10
+
+# sync the app (deploy)
+argocd app sync my-app
+
+# expose the app via port forwarding (unclean, should do ingress instead)
+while true; do
+      echo "waiting for dev pods to start..."
+      kubectl wait --for=condition=Ready pods --all --timeout=6969s -n dev  2>&1 > /var/log/dev-wait.log && echo "done, use curl localhost:8888 to check.."
+      kubectl port-forward services/wil-playground 8888 -n dev --address="0.0.0.0" 2>&1 > /var/log/dev-server.log 
+      sleep 10  # Add a small delay to prevent excessive CPU usage
+done &
