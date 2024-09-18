@@ -21,6 +21,9 @@ kubectl create namespace argocd
 # Create Dev Namespace
 kubectl create namespace dev
 
+# Create Dev2 Namespace
+kubectl create namespace dev2
+
 # create Gitlab namespace
 kubectl create namespace gitlab
 
@@ -41,7 +44,6 @@ sudo mv argocd /usr/local/bin/
 # Install Helm
 curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
-
 # Login to argocd using CLI
 ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo)
 echo ${ARGOCD_PASSWORD}
@@ -50,28 +52,27 @@ argocd login localhost:8080 --username admin --password $ARGOCD_PASSWORD --insec
 # change context namespace
 kubectl config set-context --current --namespace=argocd
 
-# create app in agrocd
-argocd app create my-app --repo https://github.com/Boumlik-Brahim/ybensell --path dev --dest-server https://kubernetes.default.svc --dest-namespace dev
-sleep 10
+# # create app in agrocd
+# argocd app create my-app --repo https://github.com/Boumlik-Brahim/ybensell --path dev --dest-server https://kubernetes.default.svc --dest-namespace dev
+# sleep 10
 
-#view the app
-argocd app get my-app
+# #view the app
+# argocd app get my-app
 
-# toggle app autosync
-argocd app set my-app --sync-policy automated
-sleep 10
+# # toggle app autosync
+# argocd app set my-app --sync-policy automated
+# sleep 10
 
-# sync the app (deploy)
-argocd app sync my-app
+# # sync the app (deploy)
+# argocd app sync my-app
 
 # expose the app via port forwarding (unclean, should do ingress instead)
-while true; do
-      echo "waiting for dev pods to start..."
-      kubectl wait --for=condition=Ready pods --all --timeout=6969s -n dev  2>&1 > /var/log/dev-wait.log && echo "done, use curl localhost:8888 to check.."
-      kubectl port-forward services/wil-playground 8888 -n dev --address="0.0.0.0" 2>&1 > /var/log/dev-server.log 
-      sleep 10  # Add a small delay to prevent excessive CPU usage
-done &
-
+# while true; do
+#       echo "waiting for dev pods to start..."
+#       kubectl wait --for=condition=Ready pods --all --timeout=6969s -n dev  2>&1 > /var/log/dev-wait.log && echo "done, use curl localhost:8888 to check.."
+#       kubectl port-forward services/wil-playground 8888 -n dev --address="0.0.0.0" 2>&1 > /var/log/dev-server.log 
+#       sleep 10  # Add a small delay to prevent excessive CPU usage
+# done &
 
 # set cubctl context to gitlab namespace
 kubectl config set-context --current --namespace=gitlab
@@ -82,13 +83,38 @@ helm search repo -l gitlab/gitlab
 
 helm upgrade --install gitlab gitlab/gitlab \
   --timeout 600s \
+  --set gitlab-runner.runners.privileged=true \
   --set global.hosts.domain=localhost \
   --set global.hosts.externalIP=127.0.0.1 \
   --set certmanager-issuer.email=me@example.com \
-  --set postgresql.image.tag=13.6.0 \
+  --set postgresql.image.tag=14.0.0 \
   --set livenessProbe.initialDelaySeconds=220 \
   --set readinessProbe.initialDelaySeconds=220
 
 # expose gitlab via port 82
 kubectl port-forward services/gitlab-nginx-ingress-controller 8082:443 -n gitlab --address="0.0.0.0" 2>&1 > /var/log/gitlab-webserver.log &
 kubectl get secret gitlab-gitlab-initial-root-password -ojsonpath='{.data.password}' | base64 --decode ; echo
+
+# connecting argoCD with gitlab
+kubectl patch svc gitlab-nginx-ingress-controller -p '{"spec":{"externalIPs":["10.43.2.138"]}}'
+
+# list all pods
+kubectl get pods -n argocd
+
+# get the containerID of the pod
+kubectl get pod $repoPodName -o jsonpath="{.status.containerStatuses[].containerID}" | sed 's,.*//,,'
+
+# change /etc/hosts in argocd repo container
+docker exec -it k3d-mycluster-server-0 /bin/sh
+runc --root /run/containerd/runc/k8s.io/ exec -t -u 0 $containerID sh
+echo "10.43.2.138 gitlab.localhost" >> /etc/hosts
+
+# register gitlab repo to argo CD
+argocd repo add https://gitlab.com/Boumlik-Brahim/ybensell.git --insecure-skip-server-verification
+
+# create app2 in argoCD
+argocd app create my-app2 --repo https://gitlab.com/Boumlik-Brahim/ybensell.git --path dev --dest-server https://kubernetes.default.svc --dest-namespace dev2
+sleep 10
+
+# sync the app 
+argocd app sync my-app2
