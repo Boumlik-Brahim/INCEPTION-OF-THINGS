@@ -16,7 +16,7 @@ curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stabl
 sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
 # Create K3d cluster
-k3d cluster create mycluster -p "8888:30000@server:0"
+k3d cluster create mycluster -p "8888:30000@server:0" -p "30080:30080@server:0"
 
 # Install Argo CD
 kubectl create namespace argocd
@@ -42,5 +42,9 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443 &
 echo "Setup complete. You can access Argo CD at https://localhost:8080"
 echo "Username: admin"
 echo "Password: $ARGOCD_PASSWORD"
-
 echo "Argo CD setup complete."
+
+kubectl create namespace gitlab
+kubectl apply -f configs/gitlab-deploy.yaml
+
+
