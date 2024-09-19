@@ -1,7 +1,7 @@
 #!/bin/bash
 
 sudo apt-get update
-sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+sudo apt-get install -y apt-transport-https curl software-properties-common
 
 # Install Docker
 curl -fsSL https://get.docker.com -o get-docker.sh
