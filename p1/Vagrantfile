@@ -1,7 +1,7 @@
 Vagrant.configure("2") do |config|
-  config.vm.define "ybensell" do |server|
+  config.vm.define "bbrahimS" do |server|
     server.vm.box = "generic/ubuntu1804"  
-    server.vm.hostname = "ybensellS"
+    server.vm.hostname = "bbrahimS"
     server.vm.synced_folder ".", "/vagrant_shared"
     server.vm.network "private_network", ip: "192.168.56.110"
     server.vm.provider "virtualbox" do |vb|
@@ -9,12 +9,11 @@ Vagrant.configure("2") do |config|
       vb.cpus = 1
     end
     server.vm.provision "shell", path: "scripts/server.sh"
-  
   end
 
-  config.vm.define "ybensell2" do |worker|
+  config.vm.define "bbrahimSW" do |worker|
     worker.vm.box = "generic/ubuntu1804"  
-    worker.vm.hostname = "ybensellSW"
+    worker.vm.hostname = "bbrahimSW"
     worker.vm.synced_folder ".", "/vagrant_shared"
     worker.vm.network "private_network", ip: "192.168.56.111"
     worker.vm.provider "virtualbox" do |vb|
