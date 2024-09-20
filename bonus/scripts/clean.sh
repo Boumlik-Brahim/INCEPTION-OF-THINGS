@@ -36,4 +36,3 @@ echo "- kubectl binary"
 echo "- Argo CD CLI"
 echo "- argocd and dev namespaces"
 
-echo "You may need to reboot your system for all changes to take effect."

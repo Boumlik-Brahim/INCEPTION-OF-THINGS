@@ -2,7 +2,7 @@
 
 # Set variables
 ARGOCD_SERVER="localhost:8080"
-GITHUB_REPO=""
+GITHUB_REPO="http://gitlab-service.gitlab.svc.cluster.local/root/aa.git" # Change this to your Gitlab repository
 APP_NAME="wil-playground"
 APP_NAMESPACE="dev"
 REPO_PATH="."  # The path in your repo where K8s manifests are stored
