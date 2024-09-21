@@ -18,7 +18,7 @@ sudo rm -f /usr/local/bin/kubectl
 sudo rm -f /usr/local/bin/argocd
 helm uninstall gitlab --namespace gitlab
 
-# Remove namespaces (this step is not necessary if the K3d cluster is deleted, but included for completeness)
+# Remove namespaces
 kubectl delete namespace argocd
 kubectl delete namespace dev
 kubectl delete namespace gitlab

@@ -45,6 +45,6 @@ echo "Password: $ARGOCD_PASSWORD"
 echo "Argo CD setup complete."
 
 kubectl create namespace gitlab
-kubectl apply -f configs/gitlab-deploy.yaml
+kubectl apply -f ../configs/gitlab-deploy.yaml
 
 

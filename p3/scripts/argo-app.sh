@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# Set variables
+# Variables
 ARGOCD_SERVER="localhost:8080"
 GITHUB_REPO="https://github.com/Boumlik-Brahim/ybensell"
 APP_NAME="wil-playground"
 APP_NAMESPACE="dev"
-REPO_PATH="dev"  # The path in your repo where K8s manifests are stored
+REPO_PATH="dev"  # path in your repo where K3s manifests are stored
 
-# Get the initial admin password
+# Get admin password to login to Argo CD
 ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
 
 # Login to Argo CD
@@ -23,7 +23,7 @@ argocd app create $APP_NAME \
     --auto-prune \
     --self-heal
 
-# Optional: Sync the application immediately
+# Sync the application to deploy it
 argocd app sync $APP_NAME
 
 echo "Argo CD application '$APP_NAME' has been created and synced."
